@@ -17,11 +17,24 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     private let questionsAmount = 10
     private var questionFactory: QuestionFactoryProtocol = QuestionFactory()
     private var currentQuestion: QuizQuestion?
+    private var statistics: StatisticService = StatisticServiceImplementation()
     
     override func viewDidLoad() {
         super.viewDidLoad()
         questionFactory.delegate = self
         questionFactory.requestNextQuestion()
+
+//        do {
+//            if let bundlePath = Bundle.main.path(forResource: "top250MoviesIMDB",ofType: "json"),
+//                let jsonData = try String(contentsOfFile: bundlePath).data(using: .utf8) {
+//                
+//                    let movie = try JSONDecoder().decode(Result.self, from: jsonData)
+//                
+//            }
+//        } catch {
+//            print("Failed to parse: \(error.localizedDescription)")
+//        }
+
     }
     
     // MARK: - Actions
@@ -95,9 +108,8 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     
     private func showNextQuestionOrResults() {
         if currentQuestionIndex == questionsAmount - 1 {
-            let text = correctAnswers == questionsAmount ?
-                        "Поздравляем, Вы ответили на 10 из 10!" :
-                        "Вы ответили на \(correctAnswers) из 10, попробуйте ещё раз!"
+            statistics.store(correct: correctAnswers, total: questionsAmount)
+            let text = "Ваш результат: \(correctAnswers)/\(questionsAmount)\nКоличество сыгранных квизов: \(statistics.gamesCount)\nРекорд: \(statistics.bestGame.correct)/\(statistics.bestGame.total) (\(statistics.bestGame.date.dateTimeString))\nCредняя точность: \(String(format: "%.2f", statistics.totalAccuracy))%"
             let viewModel = QuizResultsViewModel(
                 title: "Этот раунд окончен!",
                 text: text,
