@@ -18,11 +18,13 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     private var questionFactory: QuestionFactoryProtocol = QuestionFactory()
     private var currentQuestion: QuizQuestion?
     private var statistics: StatisticService = StatisticServiceImplementation()
+    private var resultAlertPresenter: AlertPresenter = ResultAlertPresenter()
     
     override func viewDidLoad() {
         super.viewDidLoad()
         questionFactory.delegate = self
         questionFactory.requestNextQuestion()
+        resultAlertPresenter.controller = self
 
 //        do {
 //            if let bundlePath = Bundle.main.path(forResource: "top250MoviesIMDB",ofType: "json"),
@@ -41,13 +43,13 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     
     @IBAction private func yesButtonClicked(_ sender: UIButton) {
         guard let currentQuestion else { return }
-        showAnswerResult(isCorrect: currentQuestion.correctAnswer == true)
+        showAnswerResult(isCorrect: currentQuestion.correctAnswer)
     }
     
     
     @IBAction private func noButtonClicked(_ sender: UIButton) {
         guard let currentQuestion else { return }
-        showAnswerResult(isCorrect: currentQuestion.correctAnswer == false)
+        showAnswerResult(isCorrect: !currentQuestion.correctAnswer)
     }
     
     // MARK: - QuestionFactoryDelegate
@@ -76,7 +78,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
             self.questionFactory.requestNextQuestion()
         }
         
-        AlertPresenter(controller: self).showAlert(alertModel)
+        resultAlertPresenter.showAlert(alertModel)
     }
     
     private func convert(model: QuizQuestion) -> QuizStepViewModel {

@@ -7,12 +7,13 @@
 
 import UIKit
 
-struct AlertPresenter {
-    private weak var controller: UIViewController?
-    
-    init(controller: UIViewController? = nil) {
-        self.controller = controller
-    }
+protocol AlertPresenter {
+    var controller: UIViewController? {get set}
+    func showAlert(_ alertModel: AlertModel)
+}
+
+struct ResultAlertPresenter: AlertPresenter {
+    weak var controller: UIViewController?
     
     func showAlert(_ alertModel: AlertModel) {
         guard let controller else { return }
