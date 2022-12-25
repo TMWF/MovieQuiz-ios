@@ -40,7 +40,7 @@
                                     </stackView>
                                     <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="bSx-sG-TO2" userLabel="Preview Image">
                                         <rect key="frame" x="0.0" y="38.999999999999972" width="335" height="502.33333333333326"/>
-                                        <color key="backgroundColor" name="white"/>
+                                        <color key="backgroundColor" name="black"/>
                                         <constraints>
                                             <constraint firstAttribute="width" secondItem="bSx-sG-TO2" secondAttribute="height" multiplier="2:3" id="0hb-ls-Mdd"/>
                                         </constraints>
