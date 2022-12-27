@@ -8,6 +8,18 @@
 import Foundation
 
 class QuestionFactory: QuestionFactoryProtocol {
+    
+    public class UnexpectedError: Error, LocalizedError {
+        public var errorDescription: String?
+        
+        private let message: String
+        
+        init(message: String) {
+            self.message = message
+            errorDescription = message
+        }
+    }
+    
     private let moviesLoader: MoviesLoading
     weak var delegate: QuestionFactoryDelegate?
     private var movies: [MostPopularMovie] = []
@@ -65,6 +77,11 @@ class QuestionFactory: QuestionFactoryProtocol {
                 guard let self = self else { return }
                 switch result {
                 case .success(let mostPopularMovies):
+                    if !mostPopularMovies.errorMessage.isEmpty {
+                        print(mostPopularMovies.errorMessage)
+                        self.delegate?.didFailToLoadData(with: UnexpectedError(message: mostPopularMovies.errorMessage))
+                        return
+                    }
                     self.movies = mostPopularMovies.items
                     self.delegate?.didLoadDataFromServer()
                 case .failure(let error):
@@ -89,25 +106,32 @@ class QuestionFactory: QuestionFactoryProtocol {
                 print("Failed to load image")
             }
             
-            let rating = Float(movie.rating) ?? 0
-            
-            let moreOrLessArray = ["больше", "меньше"]
-            let ratingOptionsArray: [Float] = [6, 7, 8, 9]
-            let questionRating = ratingOptionsArray.randomElement() ?? 7
-            let questionWord = moreOrLessArray.randomElement() ?? "больше"
-            
-            let text = "Рейтинг этого фильма \(questionWord) чем \(questionRating)?"
-            let correctAnswer = {
-                questionWord == "больше" ? rating > questionRating : rating < questionRating
-            }()
-            
-            let question = QuizQuestion(image: imageData,
-                                        text: text,
-                                        correctAnswer: correctAnswer)
-            
-            DispatchQueue.main.async { [weak self] in
-                guard let self = self else { return }
-                self.delegate?.didReceiveNextQuestion(question: question)
+            do {
+                let rating = Float(movie.rating) ?? 0
+                
+                let moreOrLessArray = ["больше", "меньше"]
+                let ratingOptionsArray: [Float] = [6, 7, 8, 9]
+                let questionRating = ratingOptionsArray.randomElement() ?? 7
+                let questionWord = moreOrLessArray.randomElement() ?? "больше"
+                
+                let text = "Рейтинг этого фильма \(questionWord) чем \(questionRating)?"
+                let correctAnswer = {
+                    questionWord == "больше" ? rating > questionRating : rating < questionRating
+                }()
+                
+                let question = QuizQuestion(image: imageData,
+                                            text: text,
+                                            correctAnswer: correctAnswer)
+                
+                DispatchQueue.main.async { [weak self] in
+                    guard let self = self else { return }
+                    self.delegate?.didReceiveNextQuestion(question: question)
+                }
+            } catch {
+                DispatchQueue.main.async { [weak self] in
+                    guard let self = self else { return }
+                    self.delegate?.didFailToLoadData(with: error)
+                }
             }
         }
     }

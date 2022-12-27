@@ -25,9 +25,9 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         super.viewDidLoad()
         questionFactory.delegate = self
         alertPresenter.controller = self
+        activityIndicator.hidesWhenStopped = true
         showLoadingIndicator()
         questionFactory.loadData()
-        
     }
     
     // MARK: - Actions
@@ -55,7 +55,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     }
     
     func didLoadDataFromServer() {
-        activityIndicator.isHidden = true
+        hideLoadingIndicator()
         questionFactory.requestNextQuestion()
     }
 
@@ -73,6 +73,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         
         let alertModel = AlertModel(title: "Ошибка", message: message, buttonText: "Попробовать еще раз") { [weak self] _ in
             guard let self else { return }
+            self.showLoadingIndicator()
             self.questionFactory.loadData()
         }
         
