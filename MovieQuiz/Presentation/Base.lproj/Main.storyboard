@@ -40,7 +40,7 @@
                                     </stackView>
                                     <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="bSx-sG-TO2" userLabel="Preview Image">
                                         <rect key="frame" x="0.0" y="38.999999999999972" width="335" height="502.33333333333326"/>
-                                        <color key="backgroundColor" name="white"/>
+                                        <color key="backgroundColor" name="black"/>
                                         <constraints>
                                             <constraint firstAttribute="width" secondItem="bSx-sG-TO2" secondAttribute="height" multiplier="2:3" id="0hb-ls-Mdd"/>
                                         </constraints>
@@ -113,17 +113,23 @@
                                     </stackView>
                                 </subviews>
                             </stackView>
+                            <activityIndicatorView opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" style="medium" translatesAutoresizingMaskIntoConstraints="NO" id="LMU-4r-IO3">
+                                <rect key="frame" x="177.66666666666666" y="396" width="20" height="20"/>
+                            </activityIndicatorView>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="6Tk-OE-BBY"/>
                         <color key="backgroundColor" name="black"/>
                         <constraints>
                             <constraint firstItem="9Zg-lh-yZm" firstAttribute="bottom" secondItem="6Tk-OE-BBY" secondAttribute="bottom" id="877-mi-9P4"/>
+                            <constraint firstItem="LMU-4r-IO3" firstAttribute="centerY" secondItem="8bC-Xf-vdC" secondAttribute="centerY" id="FhM-C8-Pfk"/>
                             <constraint firstItem="9Zg-lh-yZm" firstAttribute="top" secondItem="6Tk-OE-BBY" secondAttribute="top" constant="10" id="cCy-3J-hKx"/>
                             <constraint firstItem="9Zg-lh-yZm" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" constant="20" id="kmc-5U-cO4"/>
+                            <constraint firstItem="LMU-4r-IO3" firstAttribute="centerX" secondItem="8bC-Xf-vdC" secondAttribute="centerX" id="uSi-qk-WJc"/>
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="9Zg-lh-yZm" secondAttribute="trailing" constant="20" id="zWQ-On-Hwd"/>
                         </constraints>
                     </view>
                     <connections>
+                        <outlet property="activityIndicator" destination="LMU-4r-IO3" id="drn-DH-JDQ"/>
                         <outlet property="counterLabel" destination="fCN-a6-d0F" id="NDE-CU-suZ"/>
                         <outlet property="imageView" destination="bSx-sG-TO2" id="MPF-7n-MAB"/>
                         <outlet property="noButton" destination="rRm-E0-s81" id="DTi-Fc-IUv"/>

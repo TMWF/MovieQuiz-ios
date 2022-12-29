@@ -26,9 +26,9 @@ struct Actor: Codable {
     let asCharacter: String
 }
 
-struct Result: Codable {
-    let items: [Movie]
-}
+//struct Result: Codable {
+//    let items: [Movie]
+//}
 
 
 
