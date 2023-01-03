@@ -12,10 +12,10 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     @IBOutlet private weak var yesButton: UIButton!
     @IBOutlet private weak var activityIndicator: UIActivityIndicatorView!
     
+    private var currentQuestion: QuizQuestion?
     private var correctAnswers = 0
     private let presenter = MovieQuizPresenter()
     private var questionFactory: QuestionFactoryProtocol = QuestionFactory(movieLoader: MoviesLoader())
-    private var currentQuestion: QuizQuestion?
     private var statistics: StatisticService = StatisticServiceImplementation()
     private var alertPresenter: AlertPresenter = ResultAlertPresenter()
     
@@ -23,6 +23,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         super.viewDidLoad()
         questionFactory.delegate = self
         alertPresenter.controller = self
+        presenter.movieQuizViewController = self
         activityIndicator.hidesWhenStopped = true
         showLoadingIndicator()
         questionFactory.loadData()
@@ -31,14 +32,14 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     // MARK: - Actions
     
     @IBAction private func yesButtonClicked(_ sender: UIButton) {
-        guard let currentQuestion else { return }
-        showAnswerResult(isCorrect: currentQuestion.correctAnswer)
+        presenter.setCurrentQuestion(currentQuestion)
+        presenter.yesButtonClicked()
     }
     
     
     @IBAction private func noButtonClicked(_ sender: UIButton) {
-        guard let currentQuestion else { return }
-        showAnswerResult(isCorrect: !currentQuestion.correctAnswer)
+        presenter.setCurrentQuestion(currentQuestion)
+        presenter.noButtonClicked()
     }
     
     // MARK: - QuestionFactoryDelegate
@@ -103,7 +104,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     
     
     
-    private func showAnswerResult(isCorrect: Bool) {
+    func showAnswerResult(isCorrect: Bool) {
         yesButton.isEnabled = false
         noButton.isEnabled = false
         imageView.layer.masksToBounds = true
