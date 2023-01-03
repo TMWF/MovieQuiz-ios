@@ -9,9 +9,13 @@ import UIKit
 
 final class MovieQuizPresenter {
     weak var movieQuizViewController: MovieQuizViewController?
+    var correctAnswers = 0
     private var currentQuestionIndex = 0
-    private let questionsAmount = 10
     private var currentQuestion: QuizQuestion?
+    private var statistics: StatisticService = StatisticServiceImplementation()
+    private let questionsAmount = 10
+    var questionFactory: QuestionFactoryProtocol = QuestionFactory(movieLoader: MoviesLoader())
+
     
     func getCurrentQuestionIndex() -> Int {
         currentQuestionIndex
@@ -21,10 +25,6 @@ final class MovieQuizPresenter {
         questionsAmount
     }
     
-    func setCurrentQuestion(_ question: QuizQuestion?) {
-        currentQuestion = question
-    }
-    
     public func convert(model: QuizQuestion) -> QuizStepViewModel {
         QuizStepViewModel(
             image: UIImage(data: model.image) ?? UIImage(),
@@ -32,13 +32,18 @@ final class MovieQuizPresenter {
             questionNumber: "\(currentQuestionIndex + 1)/\(questionsAmount)")
     }
     
-    func yesButtonClicked() {
+    private func didAnswer(isYes: Bool) {
         guard let currentQuestion else { return }
-        movieQuizViewController?.showAnswerResult(isCorrect: currentQuestion.correctAnswer)
+        movieQuizViewController?.showAnswerResult(isCorrect: isYes == currentQuestion.correctAnswer)
     }
-    func noButtonClicked() {
-        guard let currentQuestion else { return }
-        movieQuizViewController?.showAnswerResult(isCorrect: !currentQuestion.correctAnswer)
+    
+    func didReceiveNextQuestion(question: QuizQuestion?) {
+        guard let question else { return }
+        currentQuestion = question
+        let viewModel = convert(model: question)
+        DispatchQueue.main.async { [weak self] in
+            self?.movieQuizViewController?.show(next: viewModel)
+        }
     }
     
     func isLastQuestion() -> Bool {
@@ -49,8 +54,34 @@ final class MovieQuizPresenter {
         currentQuestionIndex = 0
     }
     
+    private func showNextQuestionOrResults() {
+        if isLastQuestion() {
+            statistics.store(correct: correctAnswers, total: getQuestionsAmount())
+            let text = "Ваш результат: \(correctAnswers)/\(getQuestionsAmount())\nКоличество сыгранных квизов: \(statistics.gamesCount)\nРекорд: \(statistics.bestGame.correct)/\(statistics.bestGame.total) (\(statistics.bestGame.date.dateTimeString))\nCредняя точность: \(String(format: "%.2f", statistics.totalAccuracy))%"
+            let viewModel = QuizResultsViewModel(
+                title: "Этот раунд окончен!",
+                text: text,
+                buttonText: "Сыграть ещё раз")
+            movieQuizViewController?.show(result: viewModel)
+        } else {
+            switchToNextQuestion()
+            
+            questionFactory.requestNextQuestion()
+        }
+    }
+
+    
     func switchToNextQuestion() {
         currentQuestionIndex += 1
     }
+    
+    func yesButtonClicked() {
+        didAnswer(isYes: true)
+    }
+    
+    func noButtonClicked() {
+        didAnswer(isYes: false)
+    }
+    
 }
 
