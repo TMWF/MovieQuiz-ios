@@ -8,7 +8,7 @@
 import UIKit
 
 final class MovieQuizPresenter {
-    weak var movieQuizViewController: MovieQuizViewController?
+    private weak var movieQuizViewController: MovieQuizViewController?
     var correctAnswers = 0
     private var currentQuestionIndex = 0
     private var currentQuestion: QuizQuestion?
@@ -16,6 +16,12 @@ final class MovieQuizPresenter {
     private let questionsAmount = 10
     var questionFactory: QuestionFactoryProtocol = QuestionFactory(movieLoader: MoviesLoader())
 
+    init(movieQuizViewController: MovieQuizViewController? = nil) {
+        self.movieQuizViewController = movieQuizViewController
+        questionFactory.delegate = self
+        questionFactory.loadData()
+        movieQuizViewController?.showLoadingIndicator()
+    }
     
     func getCurrentQuestionIndex() -> Int {
         currentQuestionIndex
@@ -32,29 +38,26 @@ final class MovieQuizPresenter {
             questionNumber: "\(currentQuestionIndex + 1)/\(questionsAmount)")
     }
     
+    func didAnswer(isCorrect:Bool) {
+        if isCorrect { correctAnswers += 1 }
+    }
+    
     private func didAnswer(isYes: Bool) {
         guard let currentQuestion else { return }
         movieQuizViewController?.showAnswerResult(isCorrect: isYes == currentQuestion.correctAnswer)
-    }
-    
-    func didReceiveNextQuestion(question: QuizQuestion?) {
-        guard let question else { return }
-        currentQuestion = question
-        let viewModel = convert(model: question)
-        DispatchQueue.main.async { [weak self] in
-            self?.movieQuizViewController?.show(next: viewModel)
-        }
     }
     
     func isLastQuestion() -> Bool {
         currentQuestionIndex == questionsAmount - 1
     }
     
-    func resetQuestionIndex() {
+    func restartGame() {
+        correctAnswers = 0
         currentQuestionIndex = 0
+        questionFactory.requestNextQuestion()
     }
     
-    private func showNextQuestionOrResults() {
+    func showNextQuestionOrResults() {
         if isLastQuestion() {
             statistics.store(correct: correctAnswers, total: getQuestionsAmount())
             let text = "Ваш результат: \(correctAnswers)/\(getQuestionsAmount())\nКоличество сыгранных квизов: \(statistics.gamesCount)\nРекорд: \(statistics.bestGame.correct)/\(statistics.bestGame.total) (\(statistics.bestGame.date.dateTimeString))\nCредняя точность: \(String(format: "%.2f", statistics.totalAccuracy))%"
@@ -83,5 +86,32 @@ final class MovieQuizPresenter {
         didAnswer(isYes: false)
     }
     
+}
+
+// MARK: - QuestionFactoryDelegate
+
+extension MovieQuizPresenter: QuestionFactoryDelegate {
+    
+    func didLoadDataFromServer() {
+        movieQuizViewController?.hideLoadingIndicator()
+        questionFactory.requestNextQuestion()
+    }
+    
+    func didFailToLoadData(with error: Error) {
+        let message = error.localizedDescription
+        movieQuizViewController?.showNetworkError(message: message)
+    }
+    
+    func didReceiveNextQuestion(question: QuizQuestion?) {
+        guard let question = question else {
+            return
+        }
+        
+        currentQuestion = question
+        let viewModel = convert(model: question)
+        DispatchQueue.main.async { [weak self] in
+            self?.movieQuizViewController?.show(next: viewModel)
+        }
+    }
 }
 
