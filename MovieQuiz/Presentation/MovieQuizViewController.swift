@@ -1,9 +1,20 @@
 import UIKit
 
+protocol MovieQuizViewControllerProtocol: AnyObject {
+    func enableButtonsAndReduceIVBorderWidth()
+    func show(next step: QuizStepViewModel)
+    func show(result: QuizResultsViewModel)
+    
+    func highlightImageBorder(isCorrectAnswer: Bool)
+    
+    func showLoadingIndicator()
+    func hideLoadingIndicator()
+    
+    func showNetworkError(message: String)
+}
 
 
-
-final class MovieQuizViewController: UIViewController {
+final class MovieQuizViewController: UIViewController, MovieQuizViewControllerProtocol {
     
     @IBOutlet private weak var counterLabel: UILabel!
     @IBOutlet private weak var imageView: UIImageView!
@@ -13,7 +24,6 @@ final class MovieQuizViewController: UIViewController {
     @IBOutlet private weak var activityIndicator: UIActivityIndicatorView!
     
     private var presenter: MovieQuizPresenter!
-    private var statistics: StatisticService = StatisticServiceImplementation()
     private var alertPresenter: AlertPresenter = ResultAlertPresenter()
     
     override func viewDidLoad() {
@@ -29,12 +39,9 @@ final class MovieQuizViewController: UIViewController {
         presenter.yesButtonClicked()
     }
     
-    
     @IBAction private func noButtonClicked(_ sender: UIButton) {
         presenter.noButtonClicked()
     }
-    
-    
     
     // MARK: - Private Functions
     func showLoadingIndicator() {
@@ -73,40 +80,18 @@ final class MovieQuizViewController: UIViewController {
         alertPresenter.showAlert(alertModel)
     }
     
-    
-    
-    func showAnswerResult(isCorrect: Bool) {
+    func highlightImageBorder(isCorrectAnswer: Bool) {
         yesButton.isEnabled = false
         noButton.isEnabled = false
         imageView.layer.masksToBounds = true
         imageView.layer.borderWidth = 8
-        imageView.layer.borderColor = isCorrect ? UIColor.ypGreen.cgColor : UIColor.ypRed.cgColor
-        
-        presenter.didAnswer(isCorrect: isCorrect)
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
-            guard let self else { return }
-            self.imageView.layer.borderWidth = 0
-            self.presenter.showNextQuestionOrResults()
-            self.yesButton.isEnabled = true
-            self.noButton.isEnabled = true
-        }
+        imageView.layer.borderColor = isCorrectAnswer ? UIColor.ypGreen.cgColor : UIColor.ypRed.cgColor
     }
     
-    private func showNextQuestionOrResults() {
-        if presenter.isLastQuestion() {
-            statistics.store(correct: presenter.correctAnswers, total: presenter.getQuestionsAmount())
-            let text = "Ваш результат: \(presenter.correctAnswers)/\(presenter.getQuestionsAmount())\nКоличество сыгранных квизов: \(statistics.gamesCount)\nРекорд: \(statistics.bestGame.correct)/\(statistics.bestGame.total) (\(statistics.bestGame.date.dateTimeString))\nCредняя точность: \(String(format: "%.2f", statistics.totalAccuracy))%"
-            let viewModel = QuizResultsViewModel(
-                title: "Этот раунд окончен!",
-                text: text,
-                buttonText: "Сыграть ещё раз")
-            show(result: viewModel)
-        } else {
-            presenter.switchToNextQuestion()
-            
-            presenter.questionFactory.requestNextQuestion()
-        }
+    func enableButtonsAndReduceIVBorderWidth() {
+        yesButton.isEnabled = true
+        noButton.isEnabled = true
+        imageView.layer.borderWidth = 0
     }
     
 }

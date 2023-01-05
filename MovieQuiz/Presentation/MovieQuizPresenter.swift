@@ -8,48 +8,67 @@
 import UIKit
 
 final class MovieQuizPresenter {
-    private weak var movieQuizViewController: MovieQuizViewController?
-    var correctAnswers = 0
+    private weak var movieQuizViewController: MovieQuizViewControllerProtocol?
+    private var correctAnswers = 0
     private var currentQuestionIndex = 0
     private var currentQuestion: QuizQuestion?
     private var statistics: StatisticService = StatisticServiceImplementation()
     private let questionsAmount = 10
     var questionFactory: QuestionFactoryProtocol = QuestionFactory(movieLoader: MoviesLoader())
 
-    init(movieQuizViewController: MovieQuizViewController? = nil) {
+    init(movieQuizViewController: MovieQuizViewControllerProtocol? = nil) {
         self.movieQuizViewController = movieQuizViewController
         questionFactory.delegate = self
         questionFactory.loadData()
         movieQuizViewController?.showLoadingIndicator()
     }
     
-    func getCurrentQuestionIndex() -> Int {
+    private func getCurrentQuestionIndex() -> Int {
         currentQuestionIndex
     }
     
-    func getQuestionsAmount() -> Int {
+    private func getQuestionsAmount() -> Int {
         questionsAmount
     }
     
-    public func convert(model: QuizQuestion) -> QuizStepViewModel {
+    func convert(model: QuizQuestion) -> QuizStepViewModel {
         QuizStepViewModel(
             image: UIImage(data: model.image) ?? UIImage(),
             question: model.text,
             questionNumber: "\(currentQuestionIndex + 1)/\(questionsAmount)")
     }
     
-    func didAnswer(isCorrect:Bool) {
+    private func didAnswer(isCorrect:Bool) {
         if isCorrect { correctAnswers += 1 }
     }
     
     private func didAnswer(isYes: Bool) {
         guard let currentQuestion else { return }
-        movieQuizViewController?.showAnswerResult(isCorrect: isYes == currentQuestion.correctAnswer)
+        proceedWithAnswer(isCorrect: isYes == currentQuestion.correctAnswer)
     }
     
-    func isLastQuestion() -> Bool {
+    private func isLastQuestion() -> Bool {
         currentQuestionIndex == questionsAmount - 1
     }
+    
+    private func makeResultsMessage() -> String {
+        statistics.store(correct: correctAnswers, total: questionsAmount)
+        
+        let bestGame = statistics.bestGame
+        
+        let totalPlaysCountLine = "Количество сыгранных квизов: \(statistics.gamesCount)"
+        let currentGameResultLine = "Ваш результат: \(correctAnswers)\\\(questionsAmount)"
+        let bestGameInfoLine = "Рекорд: \(bestGame.correct)\\\(bestGame.total)"
+        + " (\(bestGame.date.dateTimeString))"
+        let averageAccuracyLine = "Средняя точность: \(String(format: "%.2f", statistics.totalAccuracy))%"
+        
+        let resultMessage = [
+            currentGameResultLine, totalPlaysCountLine, bestGameInfoLine, averageAccuracyLine
+        ].joined(separator: "\n")
+        
+        return resultMessage
+    }
+
     
     func restartGame() {
         correctAnswers = 0
@@ -57,10 +76,22 @@ final class MovieQuizPresenter {
         questionFactory.requestNextQuestion()
     }
     
-    func showNextQuestionOrResults() {
+    private func proceedWithAnswer(isCorrect: Bool) {
+        movieQuizViewController?.highlightImageBorder(isCorrectAnswer: isCorrect)
+        
+        didAnswer(isCorrect: isCorrect)
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+            guard let self else { return }
+            self.movieQuizViewController?.enableButtonsAndReduceIVBorderWidth()
+            self.proceedToNextQuestionOrResults()
+        }
+    }
+
+    
+    private func proceedToNextQuestionOrResults() {
         if isLastQuestion() {
-            statistics.store(correct: correctAnswers, total: getQuestionsAmount())
-            let text = "Ваш результат: \(correctAnswers)/\(getQuestionsAmount())\nКоличество сыгранных квизов: \(statistics.gamesCount)\nРекорд: \(statistics.bestGame.correct)/\(statistics.bestGame.total) (\(statistics.bestGame.date.dateTimeString))\nCредняя точность: \(String(format: "%.2f", statistics.totalAccuracy))%"
+            let text = makeResultsMessage()
             let viewModel = QuizResultsViewModel(
                 title: "Этот раунд окончен!",
                 text: text,
@@ -68,13 +99,12 @@ final class MovieQuizPresenter {
             movieQuizViewController?.show(result: viewModel)
         } else {
             switchToNextQuestion()
-            
             questionFactory.requestNextQuestion()
         }
     }
 
     
-    func switchToNextQuestion() {
+    private func switchToNextQuestion() {
         currentQuestionIndex += 1
     }
     
