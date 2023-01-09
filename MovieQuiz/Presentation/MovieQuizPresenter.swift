@@ -16,19 +16,11 @@ final class MovieQuizPresenter {
     private let questionsAmount = 10
     var questionFactory: QuestionFactoryProtocol = QuestionFactory(movieLoader: MoviesLoader())
 
-    init(movieQuizViewController: MovieQuizViewControllerProtocol? = nil) {
+    init(movieQuizViewController: MovieQuizViewControllerProtocol?) {
         self.movieQuizViewController = movieQuizViewController
         questionFactory.delegate = self
         questionFactory.loadData()
         movieQuizViewController?.showLoadingIndicator()
-    }
-    
-    private func getCurrentQuestionIndex() -> Int {
-        currentQuestionIndex
-    }
-    
-    private func getQuestionsAmount() -> Int {
-        questionsAmount
     }
     
     func convert(model: QuizQuestion) -> QuizStepViewModel {
@@ -69,7 +61,6 @@ final class MovieQuizPresenter {
         return resultMessage
     }
 
-    
     func restartGame() {
         correctAnswers = 0
         currentQuestionIndex = 0
@@ -88,7 +79,6 @@ final class MovieQuizPresenter {
         }
     }
 
-    
     private func proceedToNextQuestionOrResults() {
         if isLastQuestion() {
             let text = makeResultsMessage()
@@ -103,7 +93,6 @@ final class MovieQuizPresenter {
         }
     }
 
-    
     private func switchToNextQuestion() {
         currentQuestionIndex += 1
     }
@@ -115,7 +104,6 @@ final class MovieQuizPresenter {
     func noButtonClicked() {
         didAnswer(isYes: false)
     }
-    
 }
 
 // MARK: - QuestionFactoryDelegate
